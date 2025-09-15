@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Greeting Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f8fb;
+            text-align: center;
+            padding: 40px;
+        }
+        h1 {
+            color: #2b7a78;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #3aafa9;
+        }
+        nav a:hover {
+            color: #17252a;
+        }
+    </style>
+</head>
+<body>
+<h1 th:text="${message}">Greeting Message</h1>
+
+<nav>
+    <a th:href="@{/}">Home</a> |
+    <a th:href="@{/about}">About</a> |
+    <a th:href="@{/api/greeting}">Greeting (Secure)</a> |
+    <a th:href="@{/login}">Login</a>
+</nav>
+</body>
+</html>

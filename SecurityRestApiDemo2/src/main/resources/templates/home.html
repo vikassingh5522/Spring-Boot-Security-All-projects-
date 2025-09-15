@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home Page</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0;">
+
+<header style="background-color: #4CAF50; color: white; padding: 15px; text-align: center;">
+    <h1 style="margin: 0;">Welcome to the Home Page</h1>
+</header>
+
+<main style="padding: 20px; text-align: center;">
+    <p style="font-size: 18px; color: #333;">This is a public page — no login required.</p>
+
+    <nav style="margin-top: 20px;">
+        <a th:href="@{/}" style="color: #4CAF50; text-decoration: none; font-weight: bold; margin: 0 10px;">Home</a> |
+        <a th:href="@{/about}" style="color: #4CAF50; text-decoration: none; font-weight: bold; margin: 0 10px;">About</a> |
+        <a th:href="@{/api/greeting}" style="color: #4CAF50; text-decoration: none; font-weight: bold; margin: 0 10px;">Greeting (Secure)</a> |
+        <a th:href="@{/login}" style="color: #4CAF50; text-decoration: none; font-weight: bold; margin: 0 10px;">Login</a>
+    </nav>
+</main>
+
+<footer style="background-color: #f1f1f1; padding: 10px; text-align: center; color: #555; position: fixed; bottom: 0; width: 100%;">
+    &copy; 2025 Secure REST API Demo
+</footer>
+
+</body>
+</html>
