@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management - View All Students</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+
+        .student-card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .course-badge {
+            font-size: 0.8em;
+            padding: 0.4em 0.8em;
+            border-radius: 20px;
+        }
+
+        .action-buttons .btn {
+            border-radius: 20px;
+            padding: 0.4em 1em;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .stats-card {
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-left: 4px solid #007bff;
+        }
+
+        .search-box {
+            border-radius: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .search-box:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        .table-modern {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .table-modern thead {
+            background: linear-gradient(45deg, #343a40, #495057);
+        }
+
+        .empty-state {
+            padding: 80px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        .filter-tabs .nav-link {
+            border-radius: 25px;
+            margin: 0 5px;
+            font-weight: 500;
+        }
+
+        .filter-tabs .nav-link.active {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+        }
+
+        /* View transition styles */
+        .view-container {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="fas fa-graduation-cap me-2"></i>SOAP CRUD App
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Home</a>
+                <a class="nav-link active" href="/students"><i class="fas fa-users me-1"></i>View Students</a>
+                <a class="nav-link" href="/students/add"><i class="fas fa-user-plus me-1"></i>Add Student</a>
+                <a class="nav-link" href="/ws/students.wsdl" target="_blank"><i class="fas fa-code me-1"></i>WSDL</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold mb-2">
+                    <i class="fas fa-users me-3"></i>Student Management
+                </h1>
+                <p class="lead mb-0">Manage and view all registered students in the system</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="/students/add" class="btn btn-light btn-lg shadow">
+                    <i class="fas fa-plus me-2"></i>Add New Student
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Alert Messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div th:if="${!#lists.isEmpty(students)}" class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                    <h3 class="fw-bold" th:text="${#lists.size(students)}">0</h3>
+                    <p class="text-muted mb-0">Total Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-2x text-success mb-3"></i>
+                    <h3 class="fw-bold" id="courseCount">0</h3>
+                    <p class="text-muted mb-0">Different Courses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-envelope fa-2x text-info mb-3"></i>
+                    <h3 class="fw-bold" th:text="${#lists.size(students)}">0</h3>
+                    <p class="text-muted mb-0">Email Contacts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-2x text-warning mb-3"></i>
+                    <h3 class="fw-bold">100%</h3>
+                    <p class="text-muted mb-0">Active Status</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div th:if="${!#lists.isEmpty(students)}" class="card mb-4 shadow">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                        <input type="text" class="form-control search-box" id="searchInput"
+                               placeholder="Search students by name, email, or course...">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <ul class="nav nav-pills filter-tabs justify-content-end" id="filterTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-filter="all">All Students</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-filter="Computer Science">CS</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-filter="Information Technology">IT</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-filter="other">Others</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Content -->
+    <div class="row">
+        <!-- Empty State -->
+        <div th:if="${#lists.isEmpty(students)}" class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-user-graduate"></i>
+                <h3 class="fw-bold text-muted">No Students Found</h3>
+                <p class="text-muted mb-4">Your student database is empty. Start building your student community by adding the first student!</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/students/add" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add First Student
+                    </a>
+                    <a href="/ws/students.wsdl" class="btn btn-outline-secondary btn-lg" target="_blank">
+                        <i class="fas fa-code me-2"></i>View WSDL
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Content Container -->
+        <div th:if="${!#lists.isEmpty(students)}" class="col-12">
+            <!-- Toggle View Button -->
+            <div class="text-center mb-4">
+                <button class="btn btn-outline-secondary" id="toggleView">
+                    <i class="fas fa-table me-2"></i>Switch to Table View
+                </button>
+            </div>
+
+            <!-- Cards View -->
+            <div class="view-container" id="cardsView">
+                <div class="row" id="studentsContainer">
+                    <div th:each="student : ${students}"
+                         class="col-md-6 col-lg-4 mb-4 student-item"
+                         th:data-course="${student.course}">
+                        <div class="card student-card h-100">
+                            <div class="card-header bg-white border-0 pb-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-1 fw-bold" th:text="${student.name}">Student Name</h6>
+                                            <small class="text-muted">ID: <span th:text="${student.id}">1</span></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body pt-2">
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-envelope text-muted me-2"></i>
+                                        <small class="text-muted">Email</small>
+                                    </div>
+                                    <p class="mb-0 fw-medium student-email" th:text="${student.email}">email@example.com</p>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-graduation-cap text-muted me-2"></i>
+                                        <small class="text-muted">Course</small>
+                                    </div>
+                                    <span class="badge course-badge bg-primary student-course" th:text="${student.course}">Course Name</span>
+                                </div>
+                            </div>
+
+                            <div class="card-footer bg-white border-0">
+                                <div class="action-buttons d-flex gap-2">
+                                    <a th:href="@{/students/edit/{id}(id=${student.id})}"
+                                       class="btn btn-outline-warning flex-fill">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-outline-danger flex-fill delete-btn"
+                                            th:data-id="${student.id}"
+                                            th:data-name="${student.name}">
+                                        <i class="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table View (Hidden by default) -->
+            <div class="view-container" id="tableView" style="display: none;">
+                <div class="card table-modern">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="text-white">
+                            <tr>
+                                <th><i class="fas fa-hashtag me-2"></i>ID</th>
+                                <th><i class="fas fa-user me-2"></i>Name</th>
+                                <th><i class="fas fa-envelope me-2"></i>Email</th>
+                                <th><i class="fas fa-graduation-cap me-2"></i>Course</th>
+                                <th class="text-center"><i class="fas fa-cogs me-2"></i>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="student : ${students}" class="table-row student-item" th:data-course="${student.course}">
+                                <td class="fw-bold" th:text="${student.id}">1</td>
+                                <td class="card-title" th:text="${student.name}">Student Name</td>
+                                <td class="student-email" th:text="${student.email}">email@example.com</td>
+                                <td>
+                                    <span class="badge course-badge bg-primary student-course" th:text="${student.course}">Course</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/students/edit/{id}(id=${student.id})}"
+                                           class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger delete-btn"
+                                                th:data-id="${student.id}"
+                                                th:data-name="${student.name}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete student <strong id="studentName"></strong>?</p>
+                <p class="text-muted small mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDelete" class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i>Delete Student
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate unique courses count
+        const courses = new Set();
+        document.querySelectorAll('[data-course]').forEach(element => {
+            courses.add(element.getAttribute('data-course'));
+        });
+        document.getElementById('courseCount').textContent = courses.size;
+
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const studentItems = document.querySelectorAll('.student-item');
+
+                studentItems.forEach(item => {
+                    const name = item.querySelector('.card-title').textContent.toLowerCase();
+                    const email = item.querySelector('.student-email').textContent.toLowerCase();
+                    const course = item.getAttribute('data-course').toLowerCase();
+
+                    if (name.includes(searchTerm) || email.includes(searchTerm) || course.includes(searchTerm)) {
+                        item.style.display = item.closest('#cardsView') ? 'block' : 'table-row';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                const filterValue = this.getAttribute('data-filter');
+                const studentItems = document.querySelectorAll('.student-item');
+
+                studentItems.forEach(item => {
+                    const course = item.getAttribute('data-course');
+                    let shouldShow = false;
+
+                    if (filterValue === 'all') {
+                        shouldShow = true;
+                    } else if (filterValue === 'other') {
+                        shouldShow = course !== 'Computer Science' && course !== 'Information Technology';
+                    } else {
+                        shouldShow = course === filterValue;
+                    }
+
+                    if (shouldShow) {
+                        item.style.display = item.closest('#cardsView') ? 'block' : 'table-row';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Toggle view functionality
+        const toggleButton = document.getElementById('toggleView');
+        const cardsView = document.getElementById('cardsView');
+        const tableView = document.getElementById('tableView');
+        let isTableView = false;
+
+        if (toggleButton) {
+            toggleButton.addEventListener('click', function() {
+                if (isTableView) {
+                    // Switch to Cards View
+                    cardsView.style.display = 'block';
+                    tableView.style.display = 'none';
+                    this.innerHTML = '<i class="fas fa-table me-2"></i>Switch to Table View';
+                    isTableView = false;
+                } else {
+                    // Switch to Table View
+                    cardsView.style.display = 'none';
+                    tableView.style.display = 'block';
+                    this.innerHTML = '<i class="fas fa-th me-2"></i>Switch to Card View';
+                    isTableView = true;
+                }
+
+                // Trigger search and filter again to maintain current state
+                if (searchInput && searchInput.value) {
+                    searchInput.dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        // Delete functionality
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const studentNameSpan = document.getElementById('studentName');
+        const confirmDeleteLink = document.getElementById('confirmDelete');
+
+        // Use event delegation for delete buttons (works for both views)
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-btn')) {
+                const button = e.target.closest('.delete-btn');
+                const studentId = button.getAttribute('data-id');
+                const studentName = button.getAttribute('data-name');
+
+                studentNameSpan.textContent = studentName;
+                confirmDeleteLink.href = `/students/delete/${studentId}`;
+
+                deleteModal.show();
+            }
+        });
+    });
+</script>
+</body>
+</html>
